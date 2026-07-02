@@ -164,3 +164,7 @@ git clone <你的仓库地址>
 - 游戏引擎: [Cocos Creator](https://www.cocos.com/creator)
 - 美术素材来源: itch.io / 爱给网
 - 音效来源: freesound.org / zapsplat.com
+
+---
+
+📮 lhgasdfghj@163.com
