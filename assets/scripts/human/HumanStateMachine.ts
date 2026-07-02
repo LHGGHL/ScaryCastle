@@ -1,4 +1,4 @@
-import { _decorator, Component, Sprite, Label, Color } from 'cc';
+import { _decorator, Component, Sprite, Label, Color, Animation } from 'cc';
 import { HumanData, HumanState } from './HumanData';
 import { EventManager, Events } from '../core/EventManager';
 
@@ -14,70 +14,63 @@ export class HumanStateMachine extends Component {
     @property({ type: Sprite, tooltip: '角色精灵' })
     public characterSprite: Sprite | null = null;
 
+    @property({ type: Animation, tooltip: '动画组件（同节点）' })
+    animationComp: Animation | null = null;
+
+    @property({ tooltip: '动画剪辑名前缀（如 xiaoming_）' })
+    clipPrefix: string = 'xiaoming_';
+
     @property({ type: Sprite, tooltip: '情绪气泡图标（!、?、💀）' })
     public bubbleIcon: Sprite | null = null;
 
     @property({ type: Label, tooltip: '头顶文字气泡' })
     public bubbleLabel: Label | null = null;
 
-    // ---- 不同状态的表情帧名/颜色 ----
-    @property({ type: Color, tooltip: '正常颜色' })
-    public idleColor: Color = new Color(255, 255, 255, 255);
-
-    @property({ type: Color, tooltip: '怀疑颜色（偏黄）' })
-    public suspiciousColor: Color = new Color(255, 255, 150, 255);
-
-    @property({ type: Color, tooltip: '害怕颜色（偏蓝）' })
-    public scaredColor: Color = new Color(180, 200, 255, 255);
-
-    @property({ type: Color, tooltip: '极度恐惧颜色（惨白）' })
-    public terrifiedColor: Color = new Color(220, 220, 255, 255);
-
-    @property({ type: Color, tooltip: '逃跑颜色（红色）' })
-    public fleeingColor: Color = new Color(255, 150, 150, 255);
-
     private _humanData: HumanData | null = null;
-    private _lastState: HumanState = HumanState.IDLE;
+    private _lastState: HumanState | null = null;
 
     onLoad() {
         this._humanData = this.node.getComponent(HumanData);
+        if (!this.animationComp) {
+            this.animationComp = this.node.getComponent(Animation);
+        }
         if (this.bubbleIcon) this.bubbleIcon.node.active = false;
     }
 
     update(_dt: number) {
-        if (!this._humanData) return;
+        if (!this._humanData || !this.animationComp) return;
 
         const state = this._humanData.state;
         if (state === this._lastState) return;
         this._lastState = state;
 
-        // 根据状态切换外观
+        // 根据状态播动画 + 气泡
         switch (state) {
             case HumanState.IDLE:
-                this.setAppearance(this.idleColor, '');
+                this.playAnim('idle', '');
                 break;
             case HumanState.SUSPICIOUS:
-                this.setAppearance(this.suspiciousColor, '?');
+                this.playAnim('suspicious', '?');
                 break;
             case HumanState.SCARED:
-                this.setAppearance(this.scaredColor, '!');
+                this.playAnim('scared', '!');
                 break;
             case HumanState.TERRIFIED:
-                this.setAppearance(this.terrifiedColor, '!!');
+                this.playAnim('terrified', '!!');
                 break;
             case HumanState.FLEEING:
-                this.setAppearance(this.fleeingColor, '...');
+                this.playAnim('fleeing', '...');
                 break;
             case HumanState.ESCAPED:
-                this.node.active = false; // 消失
+                this.node.active = false;
                 break;
         }
     }
 
-    private setAppearance(color: Color, bubbleText: string) {
-        if (this.characterSprite) {
-            this.characterSprite.color = color;
-        }
+    /** 播放动画 + 显示气泡 */
+    private playAnim(stateName: string, bubbleText: string) {
+        const clipName = this.clipPrefix + stateName;
+        this.animationComp!.play(clipName);
         if (this.bubbleLabel) {
             this.bubbleLabel.string = bubbleText;
             this.bubbleLabel.node.active = bubbleText.length > 0;
