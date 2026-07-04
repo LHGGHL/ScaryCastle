@@ -44,25 +44,30 @@ export class HumanStateMachine extends Component {
         if (state === this._lastState) return;
         this._lastState = state;
 
-        // 根据状态播动画 + 气泡
+        // 根据状态播动画 + 气泡 + 音效
         switch (state) {
             case HumanState.IDLE:
                 this.playAnim('idle', '');
                 break;
             case HumanState.SUSPICIOUS:
                 this.playAnim('suspicious', '?');
+                EventManager.emit('playSFX', 'human_suspicious');
                 break;
             case HumanState.SCARED:
                 this.playAnim('scared', '!');
+                EventManager.emit('playSFX', 'human_scared');
                 break;
             case HumanState.TERRIFIED:
                 this.playAnim('terrified', '!!');
+                EventManager.emit('playSFX', 'human_terrified');
                 break;
             case HumanState.FLEEING:
                 this.playAnim('fleeing', '...');
+                EventManager.emit('playSFX', 'human_fleeing');
                 break;
             case HumanState.ESCAPED:
                 this.node.active = false;
+                EventManager.emit('playSFX', 'human_escaped');
                 break;
         }
     }

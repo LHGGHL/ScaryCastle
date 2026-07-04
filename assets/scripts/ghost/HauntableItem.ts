@@ -56,6 +56,7 @@ export class HauntableItem extends Component {
     private _isOnCooldown: boolean = false;
     private _cooldownTimer: number = 0;
     private _originalPos: Vec3 = new Vec3();
+    private _isPossessed: boolean = false;
 
     onLoad() {
         this._originalPos.set(this.node.position);
@@ -66,9 +67,15 @@ export class HauntableItem extends Component {
             this._cooldownTimer -= dt;
             if (this._cooldownTimer <= 0) {
                 this._isOnCooldown = false;
-                // 恢复外观（闪烁的正常色）
+                // 恢复外观：如果正被附身保持绿色，否则白色
                 const sprite = this.node.getComponent(Sprite);
-                if (sprite) sprite.color.set(255, 255, 255, 255);
+                if (sprite) {
+                    if (this._isPossessed) {
+                        sprite.color.set(200, 255, 200, 255);
+                    } else {
+                        sprite.color.set(255, 255, 255, 255);
+                    }
+                }
             }
         }
     }
@@ -196,13 +203,42 @@ export class HauntableItem extends Component {
 
     /** 播放闹鬼音效 */
     private playSound() {
-        // 通过事件让 AudioManager 播放
-        EventManager.emit('playSFX', `sounds/sfx/${this.hauntType}`);
+        // 通过事件让 AudioManager 播放（只发名字，AudioManager 会加路径前缀）
+        EventManager.emit('playSFX', this.hauntType);
     }
 
     /** 是否在冷却中 */
     public get isOnCooldown(): boolean {
         return this._isOnCooldown;
+    }
+
+    /** 是否已被鬼魂附身 */
+    public get isPossessed(): boolean {
+        return this._isPossessed;
+    }
+
+    /** 鬼魂附身此物品 */
+    public possess() {
+        this._isPossessed = true;
+        // 视觉反馈：物品变亮（绿色高亮）
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) sprite.color.set(200, 255, 200, 255);
+    }
+
+    /** 鬼魂脱离此物品 */
+    public unpossess() {
+        this._isPossessed = false;
+        // 恢复正常颜色
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) sprite.color.set(255, 255, 255, 255);
+    }
+
+    /** 计算物品到某坐标的距离（同一坐标系下） */
+    public getDistanceTo(pos: Vec3): number {
+        const myPos = this.node.position;
+        const dx = myPos.x - pos.x;
+        const dy = myPos.y - pos.y;
+        return Math.sqrt(dx * dx + dy * dy);
     }
 
     /** 判断一个世界坐标是否在惊吓范围内 */

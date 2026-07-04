@@ -34,6 +34,15 @@ export class AudioManager extends Component {
             return;
         }
         AudioManager._instance = this;
+
+        // 监听音效播放事件（模块通过 emit('playSFX', path) 触发）
+        EventManager.on('playSFX', (path: string) => {
+            this.playSFX(`sounds/sfx/${path}`);
+        }, this);
+    }
+
+    onDestroy() {
+        EventManager.off('playSFX', undefined, this);
     }
 
     /** 播放背景音乐（可渐变切换） */
